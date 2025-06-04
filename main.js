@@ -1,28 +1,45 @@
-const sections = document.querySelectorAll('section');
+const sections = document.querySelectorAll('main > section');
 const navLinks = document.querySelectorAll('.nav-link');
 
 const observerOptions = {
     root: null,
     rootMargin: '0px',
-    threshold: 0.4
+    threshold: 0.3 
 };
 
-const observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href').substring(1) === entry.target.id) {
-                    link.classList.add('active');
+function highlightNavLink() {
+    let currentSectionId = '';
+    
+    sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        // Check if section is at least partially in viewport, prioritizing those closer to top
+        if (rect.top <= 100 && rect.bottom >= 100) { // 100px offset for sticky nav
+                if (!currentSectionId || document.getElementById(currentSectionId).getBoundingClientRect().top > rect.top) {
+                currentSectionId = section.id;
                 }
-            });
         }
     });
-}, observerOptions);
 
-sections.forEach(section => {
-    observer.observe(section);
-});
+    if (!currentSectionId && window.scrollY < sections[0].offsetTop) {
+            // If near top of page before first section, no active link or hero
+    } else if (!currentSectionId && window.innerHeight + window.scrollY >= document.body.offsetHeight - 50) {
+        // If at the very bottom, highlight the last section
+        currentSectionId = sections[sections.length - 1].id;
+    }
+
+
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').substring(1) === currentSectionId) {
+            link.classList.add('active');
+        }
+    });
+}
+
+window.addEventListener('scroll', highlightNavLink);
+window.addEventListener('resize', highlightNavLink);
+document.addEventListener('DOMContentLoaded', highlightNavLink);
+
 
 function wrapLabels(label) {
     const maxLen = 16;
